@@ -165,7 +165,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 				logD(
 					String.format(
 						"onConnectionInitiated(serviceId=%s, endpointId=%s, endpointName=%s)",
-						serviceId, endpointId, connectionInfo.getEndpointName()));
+						serviceId, endpointId, connectionInfo.getEndpointName())); // connectionInfo.getEndpointName() gives wrong name
 
 				Endpoint endpoint = new Endpoint(serviceId, endpointId, connectionInfo.getEndpointName(), type);
 				mEndpoints.put(serviceId+"_"+endpointId, endpoint);
@@ -488,6 +488,8 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 				break;
 			case 1: finalStrategy = Strategy.P2P_STAR;
 				break;
+			case 2: finalStrategy = Strategy.P2P_POINT_TO_POINT;
+				break;
 		}
 
 		final Activity activity = getCurrentActivity();
@@ -558,6 +560,8 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 			case 0: finalStrategy = Strategy.P2P_CLUSTER;
 				break;
 			case 1: finalStrategy = Strategy.P2P_STAR;
+				break;
+			case 2: finalStrategy = Strategy.P2P_POINT_TO_POINT;
 				break;
 		}
 
@@ -1073,7 +1077,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 		}
 		logD(String.format("disconnectedFromEndpoint(endpoint=%s)", endpoint));
 
-		String endpointName = endpoint.getName();
+		String endpointName = endpoint.getName(); // FIXME
 
 		endpoint.setConnected(false);
 

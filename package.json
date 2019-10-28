@@ -1,6 +1,6 @@
 {
   "name": "react-native-google-nearby-connection",
-  "version": "0.0.9",
+  "version": "1.0.0",
   "description": "Select single or multiple images, with cropping option",
   "main": "index.js",
   "scripts": {
@@ -19,7 +19,10 @@
     "nearby",
     "connection"
   ],
-  "author": "Butch Marshall",
+  "author": {
+    "name": "Butch Marshall",
+    "email": "butch.a.marshall@gmail.com"
+  },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/butchmarshall/react-native-google-nearby-connection/issues"

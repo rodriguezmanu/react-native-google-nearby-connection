@@ -86,6 +86,7 @@ export const PayloadTransferUpdate = {
 export const Strategy = {
 	"P2P_CLUSTER": 0,
 	"P2P_STAR": 1,
+	"P2P_POINT_TO_POINT": 2,
 };
 
 class NearbyConnection {
