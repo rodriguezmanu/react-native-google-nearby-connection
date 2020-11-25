@@ -1439,26 +1439,9 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 			out.putInt("type", payloadType);
 
 			// Simple bytes payload
-			if (payloadType == Payload.Type.BYTES) {
-				out.putString("bytes", bytes);
-			}
-			// Represents a file or stream payload
-			else if (payloadType == Payload.Type.FILE || payloadType == Payload.Type.STREAM) {
-				// Get payloadId of payload represented
-				colonIndex = bytes.indexOf(':');
-				out.putString("payloadId", bytes.substring(0, colonIndex));
+		
+			out.putString("bytes", bytes);
 
-				bytes = bytes.substring(colonIndex + 1);
-				colonIndex = bytes.indexOf(':');
-
-				if (payloadType == Payload.Type.STREAM) {
-					out.putString("streamType", bytes.substring(0, colonIndex));
-				}
-				else {
-					out.putString("filename", bytes.substring(0, colonIndex));
-				}
-				out.putString("metadata", bytes.substring(colonIndex + 1));
-			}
 
 			promise.resolve(out);
 		}
