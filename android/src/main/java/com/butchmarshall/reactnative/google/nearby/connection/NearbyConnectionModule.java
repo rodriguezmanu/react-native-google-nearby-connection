@@ -523,64 +523,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
                         }
                     }
             );
-
 }
-
-	// protected void startAdvertising(final String endpointName, final String serviceId, final int strategy) {
-	// 	logV("MANUEL");
-	// 	mIsAdvertising = true;
-	// 	onAdvertisingStarting(endpointName, serviceId);
-
-	// 	Strategy finalStrategy = Strategy.P2P_CLUSTER;
-	// 	switch(strategy) {
-	// 		case 0: finalStrategy = Strategy.P2P_CLUSTER;
-	// 			break;
-	// 		case 1: finalStrategy = Strategy.P2P_STAR;
-	// 			break;
-	// 		case 2: finalStrategy = Strategy.P2P_POINT_TO_POINT;
-	// 			break;
-	// 	}
-
-	// 	final Activity activity = getCurrentActivity();
-	// 	final ConnectionsClient clientSingleton = getConnectionsClientSingleton(serviceId);
-	// 	final AdvertisingOptions advertisingOptions =  new AdvertisingOptions(finalStrategy);
-
-  //       permissionsCheck(activity, Arrays.asList(getRequiredPermissions()), new Callable<Void>() {
-  //           @Override
-  //           public Void call() throws Exception {
-	// 			clientSingleton
-	// 				.startAdvertising(
-	// 					endpointName,
-	// 					serviceId,
-	// 					getConnectionLifecycleCallback(serviceId, "advertised"),
-	// 					advertisingOptions
-	// 				)
-	// 				.addOnSuccessListener(
-	// 					new OnSuccessListener<Void>() {
-	// 						@Override
-	// 						public void onSuccess(Void unusedResult) {
-	// 							logV("Now advertising endpoint " + endpointName + " with serviceId " + serviceId);
-	// 							onAdvertisingStarted(endpointName, serviceId);
-	// 						}
-	// 					}
-	// 				)
-	// 				.addOnFailureListener(
-	// 					new OnFailureListener() {
-	// 						@Override
-	// 						public void onFailure(@NonNull Exception e) {
-	// 							ApiException apiException = (ApiException) e;
-
-	// 							mIsAdvertising = false;
-	// 							logW("startAdvertising for endpointName "+ endpointName +" serviceId "+ serviceId +" failed.", e);
-	// 							onAdvertisingStartFailed(endpointName, serviceId, apiException.getStatusCode());
-	// 						}
-	// 					}
-	// 				);
-
-  //               return null;
-  //           }
-  //       });
-	// }
 
 	/** Stops discovery. */
 	@ReactMethod
