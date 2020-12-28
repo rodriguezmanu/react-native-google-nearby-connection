@@ -44,15 +44,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
-import android.support.annotation.CallSuper;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.UiThread;
-import android.support.annotation.WorkerThread;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.util.SimpleArrayMap;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.CallSuper;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+import androidx.annotation.WorkerThread;
+import androidx.core.content.ContextCompat;
+import androidx.core.app.ActivityCompat;
+import androidx.collection.SimpleArrayMap;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 import com.google.android.gms.common.api.Status;
@@ -321,7 +321,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 		registerOnPayloadUpdateHandler();
 		registerSendPayloadFailedHandler();
 	}
-	
+
 	private void onPause() {
 		unregisterAdvertisingStartingHandler();
 		unregisterAdvertisingStartedHandler();
@@ -341,9 +341,9 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 		unregisterOnPayloadUpdateHandler();
 		unregisterSendPayloadFailedHandler();
 	}
-	
+
 	private void onDestroy() {
-		
+
 	}
 
 	@Override
@@ -479,59 +479,108 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 
 	@ReactMethod
 	protected void startAdvertising(final String endpointName, final String serviceId, final int strategy) {
-		mIsAdvertising = true;
-		onAdvertisingStarting(endpointName, serviceId);
+    mIsAdvertising = true;
+    onAdvertisingStarting(endpointName, serviceId);
+    Strategy finalStrategy = Strategy.P2P_CLUSTER;
+    switch (strategy) {
+        case 0:
+            finalStrategy = Strategy.P2P_CLUSTER;
+            break;
+        case 1:
+            finalStrategy = Strategy.P2P_STAR;
+            break;
+        case 2:
+            finalStrategy = Strategy.P2P_POINT_TO_POINT;
+            break;
+    }
+    final Activity activity = getCurrentActivity();
+    final ConnectionsClient clientSingleton = getConnectionsClientSingleton(serviceId);
+    final AdvertisingOptions advertisingOptions = new AdvertisingOptions(finalStrategy);
+    clientSingleton
+            .startAdvertising(
+                    endpointName,
+                    serviceId,
+                    getConnectionLifecycleCallback(serviceId, "advertised"),
+                    advertisingOptions
+            )
+            .addOnSuccessListener(
+                    new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void unusedResult) {
+                            logV("Now advertising endpoint " + endpointName + " with serviceId " + serviceId);
+                            onAdvertisingStarted(endpointName, serviceId);
+                        }
+                    }
+            )
+            .addOnFailureListener(
+                    new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            ApiException apiException = (ApiException) e;
+                            mIsAdvertising = false;
+                            logW("startAdvertising for endpointName " + endpointName + " serviceId " + serviceId + " failed.", e);
+                            onAdvertisingStartFailed(endpointName, serviceId, apiException.getStatusCode());
+                        }
+                    }
+            );
 
-		Strategy finalStrategy = Strategy.P2P_CLUSTER;
-		switch(strategy) {
-			case 0: finalStrategy = Strategy.P2P_CLUSTER;
-				break;
-			case 1: finalStrategy = Strategy.P2P_STAR;
-				break;
-			case 2: finalStrategy = Strategy.P2P_POINT_TO_POINT;
-				break;
-		}
+}
 
-		final Activity activity = getCurrentActivity();
-		final ConnectionsClient clientSingleton = getConnectionsClientSingleton(serviceId);
-		final AdvertisingOptions advertisingOptions =  new AdvertisingOptions(finalStrategy);
+	// protected void startAdvertising(final String endpointName, final String serviceId, final int strategy) {
+	// 	logV("MANUEL");
+	// 	mIsAdvertising = true;
+	// 	onAdvertisingStarting(endpointName, serviceId);
 
-        permissionsCheck(activity, Arrays.asList(getRequiredPermissions()), new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-				clientSingleton
-					.startAdvertising(
-						endpointName,
-						serviceId,
-						getConnectionLifecycleCallback(serviceId, "advertised"),
-						advertisingOptions
-					)
-					.addOnSuccessListener(
-						new OnSuccessListener<Void>() {
-							@Override
-							public void onSuccess(Void unusedResult) {
-								logV("Now advertising endpoint " + endpointName + " with serviceId " + serviceId);
-								onAdvertisingStarted(endpointName, serviceId);
-							}
-						}
-					)
-					.addOnFailureListener(
-						new OnFailureListener() {
-							@Override
-							public void onFailure(@NonNull Exception e) {
-								ApiException apiException = (ApiException) e;
+	// 	Strategy finalStrategy = Strategy.P2P_CLUSTER;
+	// 	switch(strategy) {
+	// 		case 0: finalStrategy = Strategy.P2P_CLUSTER;
+	// 			break;
+	// 		case 1: finalStrategy = Strategy.P2P_STAR;
+	// 			break;
+	// 		case 2: finalStrategy = Strategy.P2P_POINT_TO_POINT;
+	// 			break;
+	// 	}
 
-								mIsAdvertising = false;
-								logW("startAdvertising for endpointName "+ endpointName +" serviceId "+ serviceId +" failed.", e);
-								onAdvertisingStartFailed(endpointName, serviceId, apiException.getStatusCode());
-							}
-						}
-					);
+	// 	final Activity activity = getCurrentActivity();
+	// 	final ConnectionsClient clientSingleton = getConnectionsClientSingleton(serviceId);
+	// 	final AdvertisingOptions advertisingOptions =  new AdvertisingOptions(finalStrategy);
 
-                return null;
-            }
-        });
-	}
+  //       permissionsCheck(activity, Arrays.asList(getRequiredPermissions()), new Callable<Void>() {
+  //           @Override
+  //           public Void call() throws Exception {
+	// 			clientSingleton
+	// 				.startAdvertising(
+	// 					endpointName,
+	// 					serviceId,
+	// 					getConnectionLifecycleCallback(serviceId, "advertised"),
+	// 					advertisingOptions
+	// 				)
+	// 				.addOnSuccessListener(
+	// 					new OnSuccessListener<Void>() {
+	// 						@Override
+	// 						public void onSuccess(Void unusedResult) {
+	// 							logV("Now advertising endpoint " + endpointName + " with serviceId " + serviceId);
+	// 							onAdvertisingStarted(endpointName, serviceId);
+	// 						}
+	// 					}
+	// 				)
+	// 				.addOnFailureListener(
+	// 					new OnFailureListener() {
+	// 						@Override
+	// 						public void onFailure(@NonNull Exception e) {
+	// 							ApiException apiException = (ApiException) e;
+
+	// 							mIsAdvertising = false;
+	// 							logW("startAdvertising for endpointName "+ endpointName +" serviceId "+ serviceId +" failed.", e);
+	// 							onAdvertisingStartFailed(endpointName, serviceId, apiException.getStatusCode());
+	// 						}
+	// 					}
+	// 				);
+
+  //               return null;
+  //           }
+  //       });
+	// }
 
 	/** Stops discovery. */
 	@ReactMethod
@@ -1016,7 +1065,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 		IntentFilter intentFilter = new IntentFilter("com.butchmarshall.reactnative.google.nearby.connection.SendPayloadFailed");
 		getReactApplicationContext().registerReceiver(mSendPayloadFailedReceiver, intentFilter);
 	}
-	
+
 	/**
 	 * Called when connecting to an endpoint failed
 	 */
@@ -1066,11 +1115,11 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 	}
 
 	/**
-	 * Called when disconnected from an endpoint 
+	 * Called when disconnected from an endpoint
 	 */
 	private void disconnectedFromEndpoint(final String serviceId, final String endpointId) {
 		final Endpoint endpoint = mEndpoints.get(serviceId+"_"+endpointId);
-		
+
 		if (endpoint == null) {
 			logD("disconnectedFromEndpoint unknown endpoint");
 			return;
@@ -1118,7 +1167,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 	}
 
 	/**
-	 * Called when connected to a nearby advertiser 
+	 * Called when connected to a nearby advertiser
 	 */
 	private void connectedToEndpoint(final String serviceId, final String endpointId) {
 		final Endpoint endpoint = mEndpoints.get(serviceId+"_"+endpointId);
@@ -1153,7 +1202,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 				out.putString("endpointId", endpointId);
 				out.putString("endpointName", endpointName);
 				out.putString("serviceId", serviceId);
-				
+
 				sendEvent(getReactApplicationContext(), "connected_to_endpoint", out);
 			}
 		}
@@ -1226,7 +1275,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 		final Endpoint endpoint = mEndpoints.get(serviceId+"_"+endpointId);
 
 		String endpointName = endpoint.getName();
-		
+
 		// Broadcast endpoint discovered
 		Intent i = new Intent("com.butchmarshall.reactnative.google.nearby.connection.EndPointLost");
 		Bundle bundle = new Bundle();
@@ -1439,7 +1488,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 			out.putInt("type", payloadType);
 
 			// Simple bytes payload
-		
+
 			out.putString("bytes", bytes);
 
 
@@ -1641,7 +1690,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 	protected String[] getRequiredStoragePermissions() {
 		return REQUIRED_STORAGE_PERMISSIONS;
 	}
-	
+
 	/**
 	* Returns {@code true} if the app was granted all the permissions. Otherwise, returns {@code
 	* false}.
@@ -1775,7 +1824,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 			  ? status.getStatusMessage()
 			  : ConnectionsStatusCodes.getStatusCodeString(status.getStatusCode()));
 	}
-	
+
 	@CallSuper
 	protected void logV(String msg) {
 		Log.v(TAG, msg);
@@ -1844,7 +1893,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 
 			return out;
 		}
-		
+
 		public void setConnected(final Boolean newValue) {
 			this.connected = newValue;
 		}
@@ -1866,7 +1915,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 		public String getServiceId() {
 			return serviceId;
 		}
-		
+
 		@NonNull
 		public String getId() {
 			return id;
