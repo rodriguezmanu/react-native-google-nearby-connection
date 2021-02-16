@@ -44,15 +44,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
-import android.support.annotation.CallSuper;	
-import android.support.annotation.NonNull;	
-import android.support.annotation.Nullable;	
-import android.support.annotation.UiThread;	
-import android.support.annotation.WorkerThread;	
-import android.support.v4.content.ContextCompat;	
-import android.support.v4.app.ActivityCompat;	
-import android.support.v4.util.SimpleArrayMap;	
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.CallSuper;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+import androidx.annotation.WorkerThread;
+import androidx.core.content.ContextCompat;
+import androidx.core.app.ActivityCompat;
+import androidx.collection.SimpleArrayMap;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 import com.google.android.gms.common.api.Status;
@@ -479,51 +479,59 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 
 	@ReactMethod
 	protected void startAdvertising(final String endpointName, final String serviceId, final int strategy) {
-    mIsAdvertising = true;
-    onAdvertisingStarting(endpointName, serviceId);
-    Strategy finalStrategy = Strategy.P2P_CLUSTER;
-    switch (strategy) {
-        case 0:
-            finalStrategy = Strategy.P2P_CLUSTER;
-            break;
-        case 1:
-            finalStrategy = Strategy.P2P_STAR;
-            break;
-        case 2:
-            finalStrategy = Strategy.P2P_POINT_TO_POINT;
-            break;
-    }
-    final Activity activity = getCurrentActivity();
-    final ConnectionsClient clientSingleton = getConnectionsClientSingleton(serviceId);
-    final AdvertisingOptions advertisingOptions = new AdvertisingOptions(finalStrategy);
-    clientSingleton
-            .startAdvertising(
-                    endpointName,
-                    serviceId,
-                    getConnectionLifecycleCallback(serviceId, "advertised"),
-                    advertisingOptions
-            )
-            .addOnSuccessListener(
-                    new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void unusedResult) {
-                            logV("Now advertising endpoint " + endpointName + " with serviceId " + serviceId);
-                            onAdvertisingStarted(endpointName, serviceId);
-                        }
-                    }
-            )
-            .addOnFailureListener(
-                    new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            ApiException apiException = (ApiException) e;
-                            mIsAdvertising = false;
-                            logW("startAdvertising for endpointName " + endpointName + " serviceId " + serviceId + " failed.", e);
-                            onAdvertisingStartFailed(endpointName, serviceId, apiException.getStatusCode());
-                        }
-                    }
-            );
-}
+		mIsAdvertising = true;
+		onAdvertisingStarting(endpointName, serviceId);
+
+		Strategy finalStrategy = Strategy.P2P_CLUSTER;
+		switch(strategy) {
+			case 0: finalStrategy = Strategy.P2P_CLUSTER;
+				break;
+			case 1: finalStrategy = Strategy.P2P_STAR;
+				break;
+			case 2: finalStrategy = Strategy.P2P_POINT_TO_POINT;
+				break;
+		}
+
+		final Activity activity = getCurrentActivity();
+		final ConnectionsClient clientSingleton = getConnectionsClientSingleton(serviceId);
+		final AdvertisingOptions advertisingOptions = new AdvertisingOptions(finalStrategy);
+
+        permissionsCheck(activity, Arrays.asList(getRequiredPermissions()), new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+				clientSingleton
+					.startAdvertising(
+						endpointName,
+						serviceId,
+						getConnectionLifecycleCallback(serviceId, "advertised"),
+						advertisingOptions
+					)
+					.addOnSuccessListener(
+						new OnSuccessListener<Void>() {
+							@Override
+							public void onSuccess(Void unusedResult) {
+								logV("Now advertising endpoint " + endpointName + " with serviceId " + serviceId);
+								onAdvertisingStarted(endpointName, serviceId);
+							}
+						}
+					)
+					.addOnFailureListener(
+						new OnFailureListener() {
+							@Override
+							public void onFailure(@NonNull Exception e) {
+								ApiException apiException = (ApiException) e;
+
+								mIsAdvertising = false;
+								logW("startAdvertising for endpointName "+ endpointName +" serviceId "+ serviceId +" failed.", e);
+								onAdvertisingStartFailed(endpointName, serviceId, apiException.getStatusCode());
+							}
+						}
+					);
+
+                return null;
+            }
+        });
+	}
 
 	/** Stops discovery. */
 	@ReactMethod
@@ -1646,7 +1654,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
 		}
 		return true;
 	}
-
+	//
     private void permissionsCheck(final Activity activity, final List<String> requiredPermissions, final Callable<Void> callback) {
 
         List<String> missingPermissions = new ArrayList<>();
@@ -1664,18 +1672,14 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule implement
                 @Override
                 public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
                     if (requestCode == 1) {
-
-                        for (int grantResult : grantResults) {
-                            if (grantResult == PackageManager.PERMISSION_DENIED) {
-                                return true;
-                            }
-                        }
-
                         try {
-                            callback.call();
+														callback.call();
                         } catch (Exception e) {
-							logV("permissionsCheck error.");
-                        }
+													logV("permissionsCheck error.");
+												}
+
+												return true;
+
                     }
 
                     return true;
